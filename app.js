@@ -8,6 +8,7 @@ var express = require('express')
   , path = require('path')
   , io =   require('socket.io')
   , connect = require('connect')
+  , _ = require('underscore')
   , cookie = require('express/node_modules/cookie');
 var Session = require('connect').middleware.session.Session;
 var app = express();
@@ -15,7 +16,7 @@ var MemoryStore = express.session.MemoryStore;
 var sessionStore = new MemoryStore();
 
 app.configure(function () {
-    app.set('port', process.env.PORT);
+    app.set('port', process.env.PORT || 3080);
     app.set('views', __dirname + '/views');
     app.set('view engine', 'jade');
     app.use(express.favicon());
@@ -38,7 +39,7 @@ app.configure('development', function(){
 
 app.get('/', function(req, res){
     if(!req.session.myval)
-        req.session.myval = 1;
+        req.session.myval = Math.floor(Math.random()*1000);
     console.log('myval = ' + req.session.myval);
     res.render('index', {title:'Socket Session Demo'});
 });
@@ -72,17 +73,13 @@ sio.set('authorization', function (data, accept) {
 });
 sio.sockets.on('connection', function (socket) {
     var hs = socket.handshake;
-    if(!hs.session.sessval){
-        hs.session.sessval =  1;
-        hs.session.touch().save();
-    }
     socket.on('ping', function(){
         hs.session.reload( function () {
             hs.session.touch().save();
             socket.emit('serverResponse', {ResponseType: "PING",
+                                           Connections : _.keys(sio.connected).length,
                                            ResponseTime:new Date().getTime(),
-                                           Message: "Ping Response from server MemoryStore value is currently : " + hs.session.myval + "\n" +
-                                                    "the value set on the socket connect is : " + hs.session.sessval});
+                                           Message: "Random Memory Store number : " + hs.session.myval});
         });
     });
     socket.on('logout', function(){

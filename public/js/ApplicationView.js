@@ -17,6 +17,7 @@ define([
             '<div class="rowRenderer">' +
                 '<div class="row">' +
                     '<div class="span2"><h3>{{ResponseType}}</h3></div>' +
+                    '<div class="span2">Connections {{Connections}}</div>' +
                     '<div class="span4"><i class="icon-time"></i>  {{ResponseTime}}</div>' +
                 '</div>' +
                 '<div class="row">' +
@@ -25,10 +26,9 @@ define([
             '</div>'),
         initialize: function(){
             _.bindAll(this);
-            console.log('Application View initialized');
             $('.pingServer').attr("disabled", "disabled");
             $('.disconnectSession').attr("disabled", "disabled");
-            this.socket = io.connect('https://c9.io/ojdx/singlepageproject');
+            this.socket = io.connect();
             this.socket.on('connect', this.doConnect);
             this.socket.on('serverResponse',this.doResponse);
             this.socket.on('disconnect', this.doDisconnect);
@@ -50,17 +50,11 @@ define([
         doResponse : function (e){
             $(".clientOutput").append($(this.itemRendererHTML.render(e)));
         },
-        initSocketListeners : function (){
-
-        },
         pingServer: function(){
             this.socket.emit('ping');
         },
         disconnectSession: function(){
             this.socket.emit('logout');
         }
-
-
-
     });
 });
