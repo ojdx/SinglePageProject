@@ -10,7 +10,6 @@ define([
             connected : false
         },
         events : {
-            'click .startSession' : "startSession",
             'click .pingServer' : "pingServer",
             'click .disconnectSession' : "disconnectSession"
         },
@@ -29,18 +28,15 @@ define([
             console.log('Application View initialized');
             $('.pingServer').attr("disabled", "disabled");
             $('.disconnectSession').attr("disabled", "disabled");
-            $('.startSession').removeAttr("disabled");
-        },
-        startSession : function(){
-            console.log('client session start request');
-            this.socket = io.connect('//');
-            this.initSocketListeners();
+            this.socket = io.connect('https://c9.io/ojdx/singlepageproject');
+            this.socket.on('connect', this.doConnect);
+            this.socket.on('serverResponse',this.doResponse);
+            this.socket.on('disconnect', this.doDisconnect);
         },
         doConnect: function(){
             $(".clientOutput").append($(this.itemRendererHTML.render({ResponseType: "CONNECT",
                 ResponseTime:new Date().getTime(),
                 Message: "server connected"})));
-            $('.startSession').attr("disabled", "disabled");
             $('.pingServer').removeAttr("disabled");
             $('.disconnectSession').removeAttr("disabled");
         },
@@ -55,9 +51,7 @@ define([
             $(".clientOutput").append($(this.itemRendererHTML.render(e)));
         },
         initSocketListeners : function (){
-            this.socket.on('connect', this.doConnect);
-            this.socket.on('serverResponse',this.doResponse);
-            this.socket.on('disconnect', this.doDisconnect);
+
         },
         pingServer: function(){
             this.socket.emit('ping');
