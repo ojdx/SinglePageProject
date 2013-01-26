@@ -9,29 +9,34 @@ var express = require('express')
   , io =   require('socket.io')
   , connect = require('connect')
   , _ = require('underscore')
-  , cookie = require('express/node_modules/cookie');
+  , cookie = require('express/node_modules/cookie')
+  , nconf = require('nconf');
 var Session = require('connect').middleware.session.Session;
 var app = express();
 var MemoryStore = express.session.MemoryStore;
 var sessionStore = new MemoryStore();
 
-app.configure(function () {
-    app.set('port', process.env.PORT || 3080);
+require('./configuration');
+var secretPhrase = nconf.get('SecretPhrase');
+
+app.configure('all', configureApp);
+function configureApp() {
+    app.set('port', nconf.get('PORT'));
     app.set('views', __dirname + '/views');
     app.set('view engine', 'jade');
     app.use(express.favicon());
     app.use(express.logger('dev'));
     app.use(express.bodyParser());
     app.use(express.methodOverride());
-    app.use(express.cookieParser('Moonage Daydream'));
+    app.use(express.cookieParser(secretPhrase));
     app.use(express.session({cookie: {httpOnly: "true"},
-                             store: sessionStore,
-                             secret: 'Moonage Daydream'
-                            }));
+        store: sessionStore,
+        secret: secretPhrase
+    }));
     app.use(app.router);
     app.use(require('less-middleware')({ src: __dirname + '/public' }));
-    app.use(express.static(path.join(__dirname, 'public')));
-});
+    app.use(express.static(path.join(__dirname, 'public')));    
+}
 
 app.configure('development', function(){
   app.use(express.errorHandler());
@@ -40,8 +45,7 @@ app.configure('development', function(){
 app.get('/', function(req, res){
     if(!req.session.myval)
         req.session.myval = Math.floor(Math.random()*1000);
-    console.log('myval = ' + req.session.myval);
-    res.render('index', {title:'Socket Session Demo'});
+    res.render('index', {title:nconf.get('ApplicationTitle')});
 });
 
 var httpServer = http.createServer(app).listen(app.get('port'), function(){
@@ -53,7 +57,7 @@ var sio = io.listen(httpServer);
 sio.set('authorization', function (data, accept) {
     console.log('socket authorization function ');
     if (data.headers.cookie) {
-        data.cookie = connect.utils.parseSignedCookies(cookie.parse(decodeURIComponent(data.headers.cookie)), 'Moonage Daydream');
+        data.cookie = connect.utils.parseSignedCookies(cookie.parse(decodeURIComponent(data.headers.cookie)), secretPhrase);
         data.sessionID = data.cookie['connect.sid'];
         data.sessionStore = sessionStore;
         sessionStore.get(data.sessionID, function (err, session){
@@ -83,7 +87,6 @@ sio.sockets.on('connection', function (socket) {
         });
     });
     socket.on('logout', function(){
-        console.log('received logout ');
         hs.session.destroy();
         socket.disconnect();
     });

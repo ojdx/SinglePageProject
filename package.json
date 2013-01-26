@@ -1,16 +1,16 @@
 {
-  "name": "SinglePageProject",
-  "version": "0.0.1",
-  "private": true,
+  "name": "RobeAndWizardHat",
+  "version": "0.1.1",
   "scripts": {
     "start": "node app"
   },
   "dependencies": {
-    "express": "3.0.4",
+    "express": "*",
     "jade": "*",
     "less-middleware": "*",
     "socket.io": "*",
     "connect": "*",
-    "underscore": "*"
+    "underscore": "*",
+    "nconf": "*"
   }
 }
